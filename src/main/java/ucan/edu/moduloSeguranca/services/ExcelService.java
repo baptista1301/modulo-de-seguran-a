@@ -43,29 +43,40 @@ public class ExcelService {
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
 
             Sheet tiposSheet = workbook.getSheet("tipo_funcionalidade");
-            if (tiposSheet != null) importarTipos(tiposSheet);
-            else log.warn("Aba 'tipo_funcionalidade' não encontrada!");
+            if (tiposSheet != null) {
+                importarTipos(tiposSheet);
+            } else {
+                log.warn("Aba 'tipo_funcionalidade' não encontrada!");
+            }
 
             Sheet funcionalidadesSheet = workbook.getSheet("funcionalidade");
-            if (funcionalidadesSheet != null) importarAppEFuncionalidades(funcionalidadesSheet);
-            else log.warn("Aba 'funcionalidade' não encontrada!");
+            if (funcionalidadesSheet != null) {
+                importarAppEFuncionalidades(funcionalidadesSheet);
+            } else {
+                log.warn("Aba 'funcionalidade' não encontrada!");
+            }
         }
 
         log.info("Arquivo {} importado com sucesso!", file.getOriginalFilename());
     }
 
+    /**
+     * ================= APP + FUNCIONALIDADES =================
+     */
     private void importarAppEFuncionalidades(Sheet sheet) {
         Map<String, String> dadosApp = new HashMap<>();
         int linhaFuncionalidades = -1;
 
-        // === 1. Ler dados da aplicação (vertical) ===
+        // === 1º passo: Ler dados da aplicação (vertical) ===
         for (int r = 0; r <= sheet.getLastRowNum(); r++) {
             Row row = sheet.getRow(r);
             if (row == null || row.getPhysicalNumberOfCells() < 2) continue;
 
             String chave = getCellAsString(row.getCell(0));
             String valor = getCellAsString(row.getCell(1));
-            if (chave != null && valor != null) dadosApp.put(norm(chave), valor);
+            if (chave != null && valor != null) {
+                dadosApp.put(norm(chave), valor);
+            }
 
             if (norm(chave).equals("pk_funcionalidade")) {
                 linhaFuncionalidades = r;
@@ -91,7 +102,7 @@ public class ExcelService {
             log.error("Erro ao salvar app: {}", e.getMessage(), e);
         }
 
-        // === 2. Ler funcionalidades (horizontal) ===
+        // === 2º passo: Ler funcionalidades (horizontal) ===
         Row header = sheet.getRow(linhaFuncionalidades);
         Map<String, Integer> idx = mapearCabecalhos(header);
 
@@ -109,13 +120,6 @@ public class ExcelService {
 
             String designacao = getByHeader(row, idx, "designacao");
             String descricao = getByHeader(row, idx, "descricao");
-
-            // Ignorar linhas que representam a aplicação
-            if ("app".equalsIgnoreCase(designacao) || "Aplicação".equalsIgnoreCase(descricao) || pkFuncionalidade == 0) {
-                log.warn("Ignorando linha inválida ou duplicada: pk_funcionalidade = {}", pkFuncionalidade);
-                continue;
-            }
-
             String url = getByHeader(row, idx, "url");
             String tipoStr = getByHeader(row, idx, "fk_tipo_funcionalidade");
             String paiStr = getByHeader(row, idx, "fk_funcionalidade");
@@ -152,7 +156,7 @@ public class ExcelService {
             }
         }
 
-        // === 3. Vincular pai ===
+        // === 3º passo: Vincular pai ===
         for (Map.Entry<Integer, String> entry : paiMap.entrySet()) {
             Integer pk = entry.getKey();
             String paiStr = entry.getValue();
@@ -169,7 +173,7 @@ public class ExcelService {
             }
         }
 
-        // === 4. Vincular compartilhadas ===
+        // === 4º passo: Vincular compartilhadas ===
         for (Map.Entry<Integer, String> entry : compartilhadasMap.entrySet()) {
             Integer pk = entry.getKey();
             String compsStr = entry.getValue();
@@ -182,9 +186,6 @@ public class ExcelService {
                             .map(cache::get)
                             .filter(Objects::nonNull)
                             .collect(Collectors.toSet());
-                    if (func.getFuncionalidadesPartilhadas() == null) {
-                        func.setFuncionalidadesPartilhadas(new HashSet<>());
-                    }
                     func.getFuncionalidadesPartilhadas().addAll(partilhadas);
                     funcionalidadeRepository.saveAndFlush(func);
                 } catch (Exception e) {
@@ -194,6 +195,9 @@ public class ExcelService {
         }
     }
 
+    /**
+     * ================= TIPOS =================
+     */
     private void importarTipos(Sheet sheet) {
         Row header = sheet.getRow(0);
         Map<String, Integer> idx = mapearCabecalhos(header);
@@ -216,6 +220,9 @@ public class ExcelService {
         }
     }
 
+    /**
+     * ================= HELPERS =================
+     */
     private String norm(String s) {
         return s == null ? null : s.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", "_");
     }
