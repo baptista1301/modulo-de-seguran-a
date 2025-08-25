@@ -26,7 +26,7 @@ public class FuncionalidadeService {
     }
 
     public List<FuncionalidadeModel> listarTodas() {
-        return funcionalidadeRepository.findAll();
+        return funcionalidadeRepository.findAllByOrderByPkFuncionalidadeAsc();
     }
 
     public List<FuncionalidadeModel> listarPorApp(Integer appId) {
