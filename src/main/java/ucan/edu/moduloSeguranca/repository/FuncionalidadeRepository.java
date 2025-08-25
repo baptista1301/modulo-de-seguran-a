@@ -8,4 +8,5 @@ import java.util.List;
 public interface FuncionalidadeRepository extends JpaRepository<FuncionalidadeModel, Integer> {
     List<FuncionalidadeModel> findByAppPkApp(Integer appId);
     FuncionalidadeModel findByDesignacao(String designacao);
+    List<FuncionalidadeModel> findAllByOrderByPkFuncionalidadeAsc();
 }
