@@ -22,7 +22,7 @@ public class FuncionalidadeController {
         return ResponseEntity.ok(criada);
     }
 
-    @GetMapping
+    @GetMapping("/")
     public ResponseEntity<List<FuncionalidadeModel>> listarTodas() {
         return ResponseEntity.ok(funcionalidadeService.listarTodas());
     }
